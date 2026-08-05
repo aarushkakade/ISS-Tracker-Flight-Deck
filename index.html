@@ -5,668 +5,234 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
   <title>Flight Director | ISS Telemetry</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <style>
-    :root{
-      --bg:#0c0d0e;
-      --bg2:#121316;
-      --panel:#18191c;
-      --panel2:#141518;
-      --border:#27272a;
-      --text:#f4f4f5;
-      --muted:#a1a1aa;
-      --faint:#71717a;
-      --amber:#f97316;
-      --amber2:#eab308;
-      --green:#22c55e;
-      --red:#ef4444;
-      --mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      --sans:"Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      --shadow: 0 12px 30px rgba(0,0,0,.35);
-    }
-
+    :root{--bg:#0c0d0e;--bg2:#121316;--panel:#18191c;--panel2:#141518;--border:#27272a;--text:#f4f4f5;--muted:#a1a1aa;--faint:#71717a;--amber:#f97316;--amber2:#eab308;--green:#22c55e;--mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;--sans:'Inter',system-ui,sans-serif;--shadow:0 12px 30px rgba(0,0,0,.35)}
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{
-      margin:0;
-      font-family:var(--sans);
-      background:
-        radial-gradient(1200px 700px at 20% -10%, rgba(249,115,22,.08), transparent 42%),
-        radial-gradient(900px 600px at 85% 0%, rgba(234,179,8,.05), transparent 40%),
-        linear-gradient(180deg, var(--bg), var(--bg2));
-      color:var(--text);
-    }
-
-    .app{
-      min-height:100%;
-      display:grid;
-      grid-template-rows:auto auto 1fr;
-    }
-
-    header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:16px;
-      padding:14px 18px;
-      border-bottom:1px solid var(--border);
-      background:rgba(12,13,14,.88);
-      position:sticky;
-      top:0;
-      z-index:20;
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:14px;
-      min-width:0;
-    }
-
-    .brand img{
-      display:block;
-      height:34px;
-      width:auto;
-      object-fit:contain;
-      filter:brightness(1.02) contrast(1.02);
-    }
-
-    .titleblock{
-      display:flex;
-      flex-direction:column;
-      min-width:0;
-    }
-
-    .title{
-      font-size:14px;
-      font-weight:800;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      line-height:1.1;
-    }
-
-    .subtitle{
-      font-size:12px;
-      color:var(--muted);
-      margin-top:3px;
-      font-family:var(--mono);
-    }
-
-    .status{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:8px 12px;
-      border:1px solid var(--border);
-      background:var(--panel);
-      border-radius:0;
-      font-family:var(--mono);
-      font-size:12px;
-      white-space:nowrap;
-    }
-
-    .pulse{
-      width:8px;height:8px;border-radius:50%;
-      background:var(--green);
-      box-shadow:0 0 0 4px rgba(34,197,94,.12);
-    }
-
-    .topbar{
-      display:grid;
-      grid-template-columns:1.2fr .8fr;
-      gap:12px;
-      padding:12px 18px 0;
-    }
-
-    .bar, .panel{
-      border:1px solid var(--border);
-      background:linear-gradient(180deg, rgba(255,255,255,.01), transparent), var(--panel);
-      box-shadow:var(--shadow);
-    }
-
-    .bar{
-      padding:10px 12px;
-      display:grid;
-      grid-template-columns:repeat(5, minmax(0, 1fr));
-      gap:10px;
-      align-items:center;
-    }
-
-    .kv{
-      min-width:0;
-      border-right:1px solid #232428;
-      padding-right:10px;
-    }
-    .kv:last-child{border-right:0;padding-right:0}
-
-    .k{
-      color:var(--muted);
-      font-size:11px;
-      text-transform:uppercase;
-      letter-spacing:.08em;
-      margin-bottom:4px;
-    }
-
-    .v{
-      font-family:var(--mono);
-      font-size:14px;
-      color:var(--amber);
-    }
-
-    .main{
-      display:grid;
-      grid-template-columns:1.55fr .95fr;
-      gap:12px;
-      padding:12px 18px 18px;
-      min-height:0;
-    }
-
-    .panel{
-      min-height:0;
-      display:flex;
-      flex-direction:column;
-    }
-
-    .panelhead{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding:10px 12px;
-      border-bottom:1px solid var(--border);
-      background:var(--panel2);
-    }
-
-    .panelhead h2{
-      margin:0;
-      font-size:12px;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-    }
-
-    .panelhead small{
-      color:var(--muted);
-      font-family:var(--mono);
-    }
-
-    .mapwrap{min-height:460px}
-    #map{
-      flex:1;
-      min-height:520px;
-      height:100%;
-      width:100%;
-      background:#0a0b0c;
-    }
-
-    .side{
-      gap:12px;
-      display:grid;
-      grid-template-rows:auto auto auto 1fr;
-      min-height:0;
-    }
-
-    .section{
-      border:1px solid var(--border);
-      background:var(--panel);
-      min-height:0;
-    }
-
-    .section .sectionhead{
-      padding:10px 12px;
-      border-bottom:1px solid var(--border);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      background:var(--panel2);
-    }
-
-    .section .sectionhead h3{
-      margin:0;
-      font-size:12px;
-      text-transform:uppercase;
-      letter-spacing:.12em;
-    }
-
-    .section .sectionbody{padding:12px}
-
-    .crewlist{
-      list-style:none;
-      padding:0;
-      margin:0;
-      display:grid;
-      gap:8px;
-      max-height:260px;
-      overflow:auto;
-    }
-
-    .crewitem{
-      display:grid;
-      grid-template-columns:auto 1fr auto;
-      gap:10px;
-      align-items:center;
-      padding:8px 10px;
-      border:1px solid #232428;
-      background:#121316;
-    }
-
-    .avatar{
-      width:24px;height:24px;border-radius:0;
-      background:linear-gradient(180deg, rgba(249,115,22,.18), rgba(249,115,22,.04));
-      border:1px solid rgba(249,115,22,.35);
-      display:grid;place-items:center;
-      color:var(--amber);
-      font-weight:700;
-      font-size:11px;
-      font-family:var(--mono);
-    }
-
-    .crewname{font-size:13px;font-weight:600;line-height:1.1}
-    .crewmeta{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px}
-    .tag{
-      font-size:11px;
-      font-family:var(--mono);
-      color:#111;
-      background:var(--amber2);
-      padding:3px 6px;
-      border-radius:0;
-      text-transform:uppercase;
-      letter-spacing:.06em;
-    }
-
-    .controls{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-
-    button{
-      appearance:none;
-      border:1px solid var(--border);
-      background:#131417;
-      color:var(--text);
-      padding:9px 10px;
-      font:600 12px/1 var(--sans);
-      cursor:pointer;
-      border-radius:0;
-    }
-    button:hover{border-color:#3a3a40}
-    button.primary{
-      background:linear-gradient(180deg, rgba(249,115,22,.18), rgba(249,115,22,.08));
-      border-color:rgba(249,115,22,.4);
-      color:#fff;
-    }
-
-    .player{
-      display:grid;
-      gap:10px;
-    }
-
-    .meter{
-      height:8px;
-      border:1px solid #2a2b2f;
-      background:#101114;
-      overflow:hidden;
-      position:relative;
-    }
-    .meter::before{
-      content:"";
-      position:absolute; inset:0;
-      background:linear-gradient(90deg, rgba(249,115,22,.15), rgba(234,179,8,.45), rgba(249,115,22,.15));
-      width:var(--level, 20%);
-      transition:width .12s linear;
-    }
-
-    .muted{color:var(--muted)}
-    .mono{font-family:var(--mono)}
-    .small{font-size:12px}
-    .listgrid{display:grid;gap:10px}
-    .footnote{color:var(--faint);font-size:11px;font-family:var(--mono);line-height:1.45}
-    .error{color:#fca5a5}
-    @media (max-width: 1100px){
-      .topbar,.main{grid-template-columns:1fr}
-      #map{min-height:420px}
-    }
+    body{margin:0;font-family:var(--sans);background:radial-gradient(1200px 700px at 20% -10%, rgba(249,115,22,.08), transparent 42%),linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text)}
+    .app{min-height:100%;display:grid;grid-template-rows:auto auto 1fr}
+    header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 18px;border-bottom:1px solid var(--border);background:rgba(12,13,14,.88);position:sticky;top:0;z-index:20;backdrop-filter:blur(8px)}
+    .brand{display:flex;align-items:center;gap:14px}.brand img{height:34px;width:auto}.title{font-size:14px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.subtitle{font-size:12px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+    .status{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--border);background:var(--panel);font-family:var(--mono);font-size:12px}.pulse{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(34,197,94,.12)}
+    .topbar{display:grid;grid-template-columns:1.2fr .8fr;gap:12px;padding:12px 18px 0}.bar,.panel{border:1px solid var(--border);background:linear-gradient(180deg, rgba(255,255,255,.01), transparent), var(--panel)}
+    .bar{padding:10px 12px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.k{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}.v{font-family:var(--mono);font-size:14px;color:var(--amber)}
+    .main{display:grid;grid-template-columns:1.55fr .95fr;gap:12px;padding:12px 18px 18px}.panel{display:flex;flex-direction:column}.panelhead,.sectionhead{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--panel2)}
+    .panelhead h2,.sectionhead h3{margin:0;font-size:12px;letter-spacing:.12em;text-transform:uppercase}.mapwrap{min-height:460px}.map{flex:1;min-height:520px;width:100%;background:#0a0b0c}
+    .side{display:grid;grid-template-rows:auto auto auto auto 1fr;gap:12px;min-height:0}.section{border:1px solid var(--border);background:var(--panel)}.sectionbody{padding:12px}
+    .crewlist{list-style:none;padding:0;margin:0;display:grid;gap:8px;max-height:260px;overflow:auto}.crewitem{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid #232428;background:#121316}.avatar{width:24px;height:24px;display:grid;place-items:center;border:1px solid rgba(249,115,22,.35);color:var(--amber);font-family:var(--mono);font-size:11px}.tag{font-size:11px;font-family:var(--mono);color:#111;background:var(--amber2);padding:3px 6px;text-transform:uppercase}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}button{appearance:none;border:1px solid var(--border);background:#131417;color:var(--text);padding:9px 10px;font:600 12px/1 var(--sans);cursor:pointer}button.primary{background:linear-gradient(180deg, rgba(249,115,22,.18), rgba(249,115,22,.08));border-color:rgba(249,115,22,.4);color:#fff}
+    .apodBox{border:1px solid #232428;background:#0f1012;overflow:hidden}.apodImg{width:100%;display:block;max-height:260px;object-fit:cover;background:#000}.apodMeta{padding:10px 12px}.apodTitle{font-weight:800;font-size:13px;margin:0 0 6px}.apodDate{font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:8px}.apodExplain{font-size:12px;line-height:1.5;color:#d4d4d8;max-height:110px;overflow:auto}
+    .footnote{color:var(--faint);font-size:11px;font-family:var(--mono);line-height:1.45}.mini-status{display:flex;gap:8px;align-items:center;border:1px solid var(--border);background:#101114;padding:7px 10px;font-family:var(--mono);font-size:12px}.mini-label{text-transform:uppercase;color:var(--muted);font-size:11px;letter-spacing:.08em}.mini-value{color:var(--amber);font-weight:700}
+    @media (max-width:1100px){.topbar,.main{grid-template-columns:1fr}.map{min-height:420px}}
   </style>
 </head>
 <body>
 <div class="app">
   <header>
     <div class="brand">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/e/e5/NASA_logo.svg" alt="NASA logo">
-      <div class="titleblock">
-        <div class="title">Flight Director / ISS Telemetry</div>
-        <div class="subtitle">Operational display • live orbit track • crew and pass tools</div>
+      <img src="https://upload.wikimedia.org/wikipedia/commons/e/e5/NASA_logo.svg" alt="NASA logo" />
+      <div>
+        <div class="title">Flight Director ISS Telemetry</div>
+        <div class="subtitle">Operational display orbit track APOD mode</div>
       </div>
     </div>
-    <div class="status">
-      <span class="pulse"></span>
-      <span id="sysStatus">SYSTEM NOMINAL</span>
-    </div>
+    <div class="status"><span class="pulse"></span><span id="sysStatus">SYSTEM NOMINAL</span></div>
   </header>
 
-  <div class="topbar">
-    <section class="bar panel" aria-label="Live telemetry">
-      <div class="kv"><div class="k">Latitude</div><div class="v" id="lat">--.--</div></div>
-      <div class="kv"><div class="k">Longitude</div><div class="v" id="lon">--.--</div></div>
-      <div class="kv"><div class="k">Altitude km</div><div class="v" id="alt">--.-</div></div>
-      <div class="kv"><div class="k">Velocity km/h</div><div class="v" id="vel">--,-</div></div>
-      <div class="kv"><div class="k">Footprint km</div><div class="v" id="foot">--.-</div></div>
-    </section>
-
-    <section class="panel" style="padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
-      <div style="display:flex;align-items:center;gap:12px;min-width:0;">
-        <div>
-          <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;">Orbital Platform</div>
-          <div class="muted mono small">ISS-25544 • dark-map overlay • 3s refresh</div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:flex-end;">
+  <section class="topbar">
+    <div class="bar panel">
+      <div><div class="k">Latitude</div><div class="v" id="lat">--.--</div></div>
+      <div><div class="k">Longitude</div><div class="v" id="lon">--.--</div></div>
+      <div><div class="k">Altitude km</div><div class="v" id="alt">--.-</div></div>
+      <div><div class="k">Velocity km/h</div><div class="v" id="vel">--,--</div></div>
+      <div><div class="k">Footprint km</div><div class="v" id="foot">--.-</div></div>
+    </div>
+    <section class="panel" style="padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div><div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:800">Orbital Platform</div><div class="muted mono small">ISS-25544 • dark-map overlay • 3s refresh</div></div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:flex-end">
         <div class="mini-status"><span class="mini-label">UTC</span><span class="mini-value" id="utcClock">--:--:--</span></div>
         <div class="mono small" id="lastUpdate">Awaiting telemetry…</div>
       </div>
     </section>
-  </div>
+  </section>
 
   <main class="main">
     <section class="panel mapwrap">
-      <div class="panelhead">
-        <h2>Ground Track</h2>
-        <small id="mapState">Leaflet / CartoDB Dark Matter</small>
-      </div>
-      <div id="map"></div>
+      <div class="panelhead"><h2>Ground Track</h2><small id="mapState">Leaflet / CartoDB Dark Matter</small></div>
+      <div id="map" class="map"></div>
     </section>
 
     <aside class="side">
-      <section class="section">
-        <div class="sectionhead">
-          <h3>Crew</h3>
-          <small id="crewState">Loading…</small>
-        </div>
-        <div class="sectionbody">
-          <ul class="crewlist" id="crewList"></ul>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="sectionhead">
-          <h3>Radio / Video</h3>
-          <small class="mono">NASA audio cue</small>
-        </div>
-        <div class="sectionbody player">
-          <div class="controls">
-            <button class="primary" id="audioToggle">Play Stream</button>
-            <button id="audioStop">Stop</button>
-          </div>
-          <div class="meter" id="audioMeter" style="--level:18%"></div>
-          <audio id="audio" preload="none" crossorigin="anonymous">
-            <source src="https://www.nasa.gov/wp-content/uploads/2018/02/iss_telemetry_audio.mp3" type="audio/mpeg">
-          </audio>
-          <div class="footnote">
-            Stream from the ISS API with live feed. If the source is unavailable, treat the player as art :P
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="sectionhead">
-          <h3>Pass Predictor</h3>
-          <small class="mono">browser geolocation</small>
-        </div>
-        <div class="sectionbody listgrid">
-          <div class="controls">
-            <button class="primary" id="geoBtn">Use My Location</button>
-            <button id="clearPass">Clear</button>
-          </div>
-          <div class="footnote" id="passText">Request location access to estimate the next visible pass window.</div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="sectionhead">
-          <h3>Diagnostics</h3>
-          <small class="mono">live</small>
-        </div>
-        <div class="sectionbody">
-          <div class="footnote" id="diag">
-            Polling ISS position every 3 seconds. Crew data will use fallback records if the public endpoint is blocked by CORS.
-          </div>
-        </div>
-      </section>
+      <section class="section"><div class="sectionhead"><h3>Crew</h3><small id="crewState">Loading…</small></div><div class="sectionbody"><ul class="crewlist" id="crewList"></ul></div></section>
+      <section class="section"><div class="sectionhead"><h3>NASA APOD</h3><small class="mono">picture of the day</small></div><div class="sectionbody"><div class="controls"><button class="primary" id="refreshApod">Refresh APOD</button><button id="openApod">Open APOD</button></div><div style="height:10px"></div><div class="apodBox"><img id="apodImg" class="apodImg" alt="NASA Astronomy Picture of the Day" /><div class="apodMeta"><div class="apodTitle" id="apodTitle">Loading…</div><div class="apodDate" id="apodDate"></div><div class="apodExplain" id="apodExplain"></div></div></div><div class="footnote" id="apodNote">Powered by NASA's Astronomy Picture of the Day API.</div></div></section>
+      <section class="section"><div class="sectionhead"><h3>Pass Predictor</h3><small class="mono">browser geolocation</small></div><div class="sectionbody"><div class="controls"><button class="primary" id="geoBtn">Use My Location</button><button id="clearPass">Clear</button></div><div class="footnote" id="passText">Request location access to estimate the next visible pass window.</div></div></section>
+      <section class="section"><div class="sectionhead"><h3>Diagnostics</h3><small class="mono">live</small></div><div class="sectionbody"><div class="footnote" id="diag">Polling ISS position every 3 seconds. APOD loads from NASA's public API.</div></div></section>
     </aside>
   </main>
 </div>
 
 <script>
   const els = {
-    lat: document.getElementById('lat'),
-    lon: document.getElementById('lon'),
-    alt: document.getElementById('alt'),
-    vel: document.getElementById('vel'),
-    foot: document.getElementById('foot'),
-    lastUpdate: document.getElementById('lastUpdate'),
-    sysStatus: document.getElementById('sysStatus'),
-    crewList: document.getElementById('crewList'),
-    crewState: document.getElementById('crewState'),
-    passText: document.getElementById('passText'),
-    diag: document.getElementById('diag'),
-    audio: document.getElementById('audio'),
-    audioToggle: document.getElementById('audioToggle'),
-    audioStop: document.getElementById('audioStop'),
-    audioMeter: document.getElementById('audioMeter'),
-    geoBtn: document.getElementById('geoBtn'),
-    clearPass: document.getElementById('clearPass')
+    lat: document.getElementById('lat'), lon: document.getElementById('lon'), alt: document.getElementById('alt'), vel: document.getElementById('vel'), foot: document.getElementById('foot'),
+    lastUpdate: document.getElementById('lastUpdate'), sysStatus: document.getElementById('sysStatus'), crewList: document.getElementById('crewList'), crewState: document.getElementById('crewState'),
+    passText: document.getElementById('passText'), diag: document.getElementById('diag'), geoBtn: document.getElementById('geoBtn'), clearPass: document.getElementById('clearPass'),
+    utcClock: document.getElementById('utcClock'), apodImg: document.getElementById('apodImg'), apodTitle: document.getElementById('apodTitle'), apodDate: document.getElementById('apodDate'),
+    apodExplain: document.getElementById('apodExplain'), refreshApod: document.getElementById('refreshApod'), openApod: document.getElementById('openApod')
   };
-
   const fallbackCrew = [
-    { name: 'Expedition Flight Director', craft: 'ISS', agency: 'NASA' },
-    { name: 'Science Payload Operator', craft: 'ISS', agency: 'ESA' },
-    { name: 'Vehicle Systems Specialist', craft: 'ISS', agency: 'JAXA' },
-    { name: 'Guidance & Navigation', craft: 'ISS', agency: 'Roscosmos' }
+    {name:'Expedition Flight Director', craft:'ISS', agency:'NASA'},
+    {name:'Science Payload Operator', craft:'ISS', agency:'ESA'},
+    {name:'Vehicle Systems Specialist', craft:'ISS', agency:'JAXA'},
+    {name:'Guidance Navigation', craft:'ISS', agency:'Roscosmos'}
   ];
-
+  const crewColor = {NASA:'NASA', ESA:'ESA', JAXA:'JAXA', Roscosmos:'ROS'};
   let map, issMarker, footprintCircle, trail = [];
-  const crewColor = {
-    NASA: 'NASA',
-    ESA: 'ESA',
-    JAXA: 'JAXA',
-    Roscosmos: 'ROSC'
-  };
+  const fmt = (n,d) => Number(n).toFixed(d);
+  const agencyTag = a => crewColor[a] || a.toString().toUpperCase();
 
-  function initMap(){
-    map = L.map('map', { zoomControl: true, worldCopyJump: true }).setView([0, 0], 2);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  function initMap() {
+    map = L.map('map', { zoomControl: true, worldCopyJump: false });
+    map.setView([0, 0], 2);
+    L.tileLayer('https://s.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; OpenStreetMap &copy; CARTO',
       subdomains: 'abcd',
-      maxZoom: 19
+      maxZoom: 19,
+      noWrap: true
     }).addTo(map);
-
-    const icon = L.divIcon({
-      className: '',
-      html: '<div style="width:18px;height:18px;border-radius:50%;background:#f97316;border:2px solid #111;box-shadow:0 0 0 6px rgba(249,115,22,.15)"></div>',
-      iconSize: [18,18],
-      iconAnchor: [9,9]
-    });
-
-    issMarker = L.marker([0, 0], { icon }).addTo(map);
-    footprintCircle = L.circle([0, 0], { radius: 1000, color: '#eab308', weight: 1, fillColor: '#eab308', fillOpacity: 0.08 }).addTo(map);
+    const icon = L.divIcon({ className: '', html: '<div style="width:18px;height:18px;border-radius:50%;background:#f97316;border:2px solid #111;box-shadow:0 0 0 6px rgba(249,115,22,.15)"></div>', iconSize: [18,18], iconAnchor: [9,9] });
+    issMarker = L.marker([0,0], { icon }).addTo(map);
+    footprintCircle = L.circle([0,0], { radius: 1000, color:'#eab308', weight:1, fillColor:'#eab308', fillOpacity:.08 }).addTo(map);
   }
 
-  function fmt(n, d=2){ return Number(n).toFixed(d); }
-
-  
-async function fetchNextISSPass(lat, lon) {
-  const passElem = document.getElementById('passText');
-  passElem.textContent = 'Looking up next ISS pass...';
-  try {
-    const url = `https://api.wheretheiss.at/v1/satellites/25544/passes?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&n=1&visible_only=false`;
-    const resp = await fetch(url, { cache: 'no-store' });
-    if (!resp.ok) throw new Error(`Pass API returned ${resp.status}`);
-    const data = await resp.json();
-    const pass = Array.isArray(data?.passes) && data.passes.length ? data.passes[0] : Array.isArray(data?.response) && data.response.length ? data.response[0] : null;
-    if (!pass) throw new Error('No pass data returned');
-    const risetime = pass.risetime ?? pass.rise_time ?? pass.start;
-    const duration = pass.duration ?? pass.length ?? null;
-    const visible = typeof pass.visible === 'boolean' ? pass.visible : null;
-    const localTime = risetime ? new Date(risetime * 1000).toLocaleString() : 'unknown time';
-    const visibleText = visible === null ? '' : visible ? 'Visible pass. ' : 'Not visibly bright. ';
-    const durationText = duration !== null ? `Duration ${duration} s.` : 'Duration unavailable.';
-    passElem.textContent = `${visibleText}Next pass: ${localTime}. ${durationText}`;
-  } catch (err) {
-    console.error('ISS pass lookup failed', err);
-    passElem.textContent = `Pass lookup failed: ${err.message}`;
+  function renderCrew(list) {
+    els.crewList.innerHTML = list.map((p,i) => `
+      <li class="crewitem"><div class="avatar">${String(i+1).padStart(2,'0')}</div><div><div style="font-size:13px;font-weight:600;line-height:1.1">${p.name}</div><div class="crewmeta">${p.craft}</div></div><div class="tag">${agencyTag(p.agency || 'ISS')}</div></li>
+    `).join('');
   }
-}
-async function fetchISS(){
-    try{
+
+  async function fetchCrew() {
+    try {
+      const r = await fetch('https://raw.githubusercontent.com/iqfareez/astros-api/refs/heads/master/db.json', { cache: 'no-store' });
+      if (!r.ok) throw new Error('crew fetch failed');
+      const d = await r.json();
+      const people = d.people.map(p => ({ name: p.name, craft: p.craft, agency: 'ISS' }));
+      if (people.length) renderCrew(people);
+      els.crewState.textContent = `${d.number || people.length} onboard`;
+    } catch (e) {
+      renderCrew(fallbackCrew);
+      els.crewState.textContent = 'fallback data…';
+    }
+  }
+
+  async function fetchISS() {
+    try {
       const r = await fetch('https://api.wheretheiss.at/v1/satellites/25544', { cache: 'no-store' });
-      if(!r.ok) throw new Error('ISS API failed');
+      if (!r.ok) throw new Error('ISS API failed');
       const d = await r.json();
       els.lat.textContent = fmt(d.latitude, 4);
       els.lon.textContent = fmt(d.longitude, 4);
       els.alt.textContent = fmt(d.altitude, 1);
       els.vel.textContent = fmt(d.velocity, 1);
-      const footprintKm = Math.max(1, Math.round((d.altitude * 1.35) + 1500));
+      const footprintKm = Math.max(1, Math.round(d.altitude * 1.35 + 1500));
       els.foot.textContent = footprintKm.toLocaleString();
-
       const latlng = [d.latitude, d.longitude];
       issMarker.setLatLng(latlng);
       footprintCircle.setLatLng(latlng);
       footprintCircle.setRadius(footprintKm * 1000);
-
       trail.push(latlng);
-      if(trail.length > 24) trail.shift();
-      if(window._trailLayer) map.removeLayer(window._trailLayer);
-      window._trailLayer = L.polyline(trail, { color:'#f97316', weight:2, opacity:.85 }).addTo(map);
-
+      if (trail.length > 24) trail.shift();
+      if (window.trailLayer) map.removeLayer(window.trailLayer);
+      window.trailLayer = L.polyline(trail, { color:'#f97316', weight:2, opacity:.85 }).addTo(map);
       els.lastUpdate.textContent = new Date().toLocaleTimeString();
       els.sysStatus.textContent = 'SYSTEM NOMINAL';
       els.sysStatus.style.color = '#f4f4f5';
-    }catch(err){
+      els.diag.textContent = 'Telemetry live.';
+    } catch (err) {
       els.sysStatus.textContent = 'TELEMETRY DEGRADED';
       els.sysStatus.style.color = '#fca5a5';
       els.diag.textContent = 'Live ISS feed unavailable. Retrying while preserving the current map state.';
     }
   }
 
-  function agencyTag(agency){
-    return crewColor[agency] || agency.toUpperCase();
-  }
-
-  async function fetchCrew(){
-    const endpoints = [
-      'https://raw.githubusercontent.com/iqfareez/astros-api/refs/heads/master/db.json',
-      'http://api.open-notify.org/astros.json'
-    ];
-    for(const url of endpoints){
-      try{
-        const r = await fetch(url, { cache: 'no-store' });
-        if(!r.ok) throw new Error('crew fetch failed: ' + url);
-        const d = await r.json();
-        const people = (d.people || []).map(p => ({
-          name: p.name,
-          craft: p.craft,
-          agency: 'ISS'
-        }));
-        if(people.length){
-          renderCrew(people);
-          els.crewState.textContent = `${d.number || people.length} onboard`;
-          return;
-        }
-      }catch(e){
-        continue;
-      }
+  async function fetchNextISSPass(lat, lon) {
+    els.passText.textContent = 'Looking up next ISS pass...';
+    try {
+      const url = `https://api.wheretheiss.at/v1/satellites/25544/passes?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&n=1&visible_only=false`;
+      const resp = await fetch(url, { cache: 'no-store' });
+      if (!resp.ok) throw new Error(`Pass API returned ${resp.status}`);
+      const data = await resp.json();
+      const pass = Array.isArray(data?.passes) && data.passes.length ? data.passes[0] : Array.isArray(data?.response) && data.response.length ? data.response[0] : null;
+      if (!pass) throw new Error('No pass data returned');
+      const risetime = pass.risetime ?? pass.start ?? null;
+      const duration = pass.duration ?? pass.length ?? null;
+      const visible = typeof pass.visible === 'boolean' ? pass.visible : null;
+      const localTime = risetime ? new Date(risetime * 1000).toLocaleString() : 'unknown time';
+      const visibleText = visible !== null ? (visible ? 'Visible pass.' : 'Not visibly bright.') : '';
+      const durationText = duration != null ? `Duration ${duration}s.` : 'Duration unavailable.';
+      els.passText.textContent = `${visibleText} Next pass ${localTime}. ${durationText}`;
+    } catch (err) {
+      els.passText.textContent = `Pass lookup failed: ${err.message}`;
     }
-    renderCrew(fallbackCrew);
-    els.crewState.textContent = 'fallback data';
   }
 
-  function renderCrew(list){
-    els.crewList.innerHTML = list.map((p,i) => `
-      <li class="crewitem">
-        <div class="avatar">${String(i+1).padStart(2,'0')}</div>
-        <div>
-          <div class="crewname">${p.name}</div>
-          <div class="crewmeta">${p.craft}</div>
-        </div>
-        <div class="tag">${agencyTag(p.agency || 'ISS')}</div>
-      </li>
-    `).join('');
-  }
+  function updateClock() { els.utcClock.textContent = new Date().toISOString().slice(11, 19); }
 
-  let audioState = false;
-  function animateAudio(){
-    const level = Math.max(14, Math.min(92, (Math.sin(Date.now()/140) + 1) * 38 + 16));
-    els.audioMeter.style.setProperty('--level', `${level}%`);
-    requestAnimationFrame(animateAudio);
-  }
-
-  els.audioToggle.addEventListener('click', async () => {
-    try{
-      if(!audioState){
-        await els.audio.play();
-        audioState = true;
-        els.audioToggle.textContent = 'Pause Stream';
-      }else{
-        els.audio.pause();
-        audioState = false;
-        els.audioToggle.textContent = 'Play Stream';
+  async function loadApod() {
+    els.apodTitle.textContent = 'Loading…';
+    els.apodDate.textContent = '';
+    els.apodExplain.textContent = '';
+    els.apodImg.removeAttribute('src');
+    const key = 'DEMO_KEY';
+    try {
+      const r = await fetch(`https://api.nasa.gov/planetary/apod?api_key=${key}`, { cache: 'no-store' });
+      if (!r.ok) throw new Error(`APOD returned ${r.status}`);
+      const d = await r.json();
+      els.apodTitle.textContent = d.title || 'NASA APOD';
+      els.apodDate.textContent = d.date || '';
+      els.apodExplain.textContent = d.explanation || '';
+      if (d.media_type === 'image') {
+        els.apodImg.src = d.url || d.hdurl;
+        els.apodImg.alt = `${d.title || 'NASA APOD'} image`;
+      } else {
+        els.apodImg.alt = 'NASA APOD video thumbnail';
+        els.apodImg.src = d.thumbnail_url || d.url || '';
+        els.apodNote.textContent = "Today's APOD is a video; using thumbnail when available.";
       }
-    }catch(e){
-      els.diag.textContent = 'Audio source unavailable in this browser context, but the control surface remains active.';
+      els.openApod.onclick = () => window.open('https://apod.nasa.gov/apod/astropix.html', '_blank', 'noopener');
+      els.diag.textContent = 'Telemetry live. APOD loaded from NASA.';
+    } catch (e) {
+      els.apodTitle.textContent = 'APOD unavailable';
+      els.apodDate.textContent = '';
+      els.apodExplain.textContent = 'NASA APOD could not be loaded right now.';
+      els.apodNote.textContent = 'Try again later or open the APOD page directly.';
+      els.diag.textContent = 'Telemetry live. APOD fetch failed.';
     }
-  });
-
-  els.audioStop.addEventListener('click', () => {
-    els.audio.pause();
-    els.audio.currentTime = 0;
-    audioState = false;
-    els.audioToggle.textContent = 'Play Stream';
-  });
-
-  
-els.geoBtn.addEventListener('click', () => {
-  if (!navigator.geolocation) {
-    els.passText.textContent = 'Geolocation is not supported in this browser.';
-    return;
   }
-  els.passText.textContent = 'Requesting location access...';
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      const latitude = pos.coords.latitude;
-      const longitude = pos.coords.longitude;
-      els.passText.textContent = `Location locked ${latitude.toFixed(3)}, ${longitude.toFixed(3)}. Looking up next ISS pass...`;
+
+  els.refreshApod.addEventListener('click', loadApod);
+  els.openApod.addEventListener('click', () => window.open('https://apod.nasa.gov/apod/astropix.html', '_blank', 'noopener'));
+  els.geoBtn.addEventListener('click', () => {
+    if (!navigator.geolocation) { els.passText.textContent = 'Geolocation is not supported in this browser.'; return; }
+    els.passText.textContent = 'Requesting location access...';
+    navigator.geolocation.getCurrentPosition(pos => {
+      const latitude = pos.coords.latitude, longitude = pos.coords.longitude;
+      els.passText.textContent = `Location locked: ${latitude.toFixed(3)}, ${longitude.toFixed(3)}. Looking up next ISS pass...`;
       fetchNextISSPass(latitude, longitude);
       map.setView([latitude, longitude], 5);
       L.marker([latitude, longitude]).addTo(map).bindPopup('Your location').openPopup();
-    },
-    () => {
-      els.passText.textContent = 'Location access denied. Pass prediction requires permission to use browser geolocation.';
-    },
-    { enableHighAccuracy: true, timeout: 8000 }
-  );
-});
-
-els.clearPass.addEventListener('click', () => {
-  els.passText.textContent = 'Request location access to estimate the next visible pass window.';
-});
-els.clearPass.addEventListener('click', () => {
-    els.passText.textContent = 'Request location access to estimate the next visible pass window.';
+    }, () => { els.passText.textContent = 'Location access denied.'; }, { enableHighAccuracy: true, timeout: 8000 });
   });
+  els.clearPass.addEventListener('click', () => { els.passText.textContent = 'Request location access to estimate the next visible pass window.'; });
 
-  initMap();
-  fetchISS();
-  fetchCrew();
-  animateAudio();
+  initMap(); fetchISS(); fetchCrew(); loadApod(); updateClock();
   setInterval(fetchISS, 3000);
-  setInterval(fetchCrew, 5 * 60 * 1000);
+  setInterval(fetchCrew, 560 * 1000);
+  setInterval(updateClock, 1000);
 </script>
 </body>
 </html>
