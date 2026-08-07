@@ -1,6 +1,8 @@
 # ISS Tracker & Flight Deck
 
 A real-time ISS dashboard. Track the International Space Station live, watch telemetry update, see astronaut's aboard.
+<img width="519" height="267" alt="Screenshot 2026-08-04 223210" src="https://github.com/user-attachments/assets/17441a86-23f1-4d1a-840b-8a93f0229863" />
+
 
 ## Features
 
